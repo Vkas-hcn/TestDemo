@@ -1,8 +1,8 @@
 plugins {
     id("com.android.application")
     id("com.google.android.gms.oss-licenses-plugin")
-    id("com.google.gms.google-services")
-    id("com.google.firebase.crashlytics")
+//    id("com.google.gms.google-services")
+//    id("com.google.firebase.crashlytics")
     kotlin("android")
     id("kotlin-parcelize")
 }
@@ -30,5 +30,6 @@ dependencies {
     implementation("me.zhanghai.android.fastscroll:library:1.1.8")
 
     implementation ("com.google.android.gms:play-services-ads:21.0.0")
+    implementation ("com.jeremyliao:live-event-bus-x:1.5.7")
 
 }

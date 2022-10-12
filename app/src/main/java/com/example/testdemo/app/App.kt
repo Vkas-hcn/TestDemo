@@ -18,13 +18,16 @@
  *                                                                             *
  *******************************************************************************/
 
-package com.example.testdemo
+package com.example.testdemo.app
 
 import android.app.Application
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
+import com.example.testdemo.MainActivity
+import com.example.testdemo.utils.ResUtils
 import com.github.shadowsocks.Core
 import com.google.android.gms.ads.MobileAds
+import com.jeremyliao.liveeventbus.LiveEventBus
 
 class App : Application(), androidx.work.Configuration.Provider by Core {
     override fun onCreate() {
@@ -32,6 +35,10 @@ class App : Application(), androidx.work.Configuration.Provider by Core {
         MobileAds.initialize(this) {}
         Core.init(this, MainActivity::class)
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
+        ResUtils.init(this)
+        LiveEventBus  // 事件儿总线通信
+            .config().supportBroadcast(this) // 配置支持跨进程、跨APP通信，传入Context，需要在application onCreate中配置
+            .lifecycleObserverAlwaysActive(true) //    整个生命周期（从onCreate到onDestroy）都可以实时收到消息
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

@@ -125,7 +125,6 @@ class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
         } else {
             connect.launch(null)
             timer.base = SystemClock.elapsedRealtime()
-            timer.start()
         }
     }
 
@@ -133,12 +132,12 @@ class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
      * 启动插页广告
      */
     private fun startInterstitial() {
-        if (mInterstitialAd != null) {
-            mInterstitialAd?.show(this)
-            startVpn()
-        } else {
-            Log.d("TAG", "The interstitial ad wasn't ready yet.")
-        }
+        startVpn()
+//        if (mInterstitialAd != null) {
+//            mInterstitialAd?.show(this)
+//        } else {
+//            Log.d("TAG", "The interstitial ad wasn't ready yet.")
+//        }
     }
 
 
@@ -163,24 +162,25 @@ class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
      * 设置连接状态文本
      */
     private fun setConnectionStatusText(state: String) {
-        val textData = when (state) {
+         when (state) {
             "Connecting" -> {
-                "连接中"
+                btnlink.text = "连接中"
             }
             "Connected" -> {
-                "断开连接"
+                timer.start()
+                btnlink.text = "断开连接"
             }
             "Stopping" -> {
-                "断开中"
+                btnlink.text =  "断开中"
             }
             "Stopped" -> {
-                "点击连接"
+                timer.stop()
+                btnlink.text =    "点击连接"
             }
             else -> {
-                "未知"
+                btnlink.text =    "配置中"
             }
         }
-        btnlink.text = textData
 
     }
 
