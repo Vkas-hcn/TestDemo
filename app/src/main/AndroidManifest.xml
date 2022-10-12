@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <uses-feature android:name="android.hardware.touchscreen"
+        android:required="false"/>
+    <uses-feature android:name="android.hardware.camera"
+        android:required="false"/>
+    <uses-feature android:name="android.software.leanback"
+        android:required="false"/>
+    <application
+        android:name="com.example.testdemo.App"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        >
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-2174740078812392~7263824144"/>
+        <activity
+            android:name="com.example.testdemo.MainActivity"
+            android:theme="@style/Theme.TestDemo"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <service android:name=".bg.TileService"
+            android:label="@string/quick_toggle"
+            android:process=":bg"
+            android:exported="true"
+            android:directBootAware="true"
+            android:icon="@drawable/ic_service_active"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            tools:targetApi="n">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
+
+        <receiver android:name="com.example.testdemo.tasker.ActionListener"
+            android:process=":bg"
+            android:directBootAware="true"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="com.twofortyfouram.locale.intent.action.FIRE_SETTING"/>
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>
