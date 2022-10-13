@@ -11,6 +11,7 @@ import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import java.util.*
 import android.content.Intent
 import android.util.Log
+import android.view.Window
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
 import com.example.testdemo.utils.StatusBarUtils
@@ -20,17 +21,17 @@ import com.jeremyliao.liveeventbus.LiveEventBus
  * Startup Page
  */
 class StartupActivity: AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
-        super.onCreate(savedInstanceState, persistentState)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         StatusBarUtils.translucent(this)
         setContentView(R.layout.activity_startup)
+        supportActionBar?.hide()
         initView()
-        Log.i("TAG", "onCreate: ----》StartupActivity")
     }
-
     private fun initView() {
-        jumpPage()
-
+        val timer = Timer()
+        val timerTask: TimerTask = HomeTimerTask()
+        timer.schedule(timerTask, 2000)
         LiveEventBus
             .get("JUMP_PAGE", Boolean::class.java)
             .observeForever {

@@ -78,20 +78,20 @@ fun Project.setupApp() {
     setupCore()
 
     android.apply {
-        defaultConfig.resourceConfigurations.addAll(listOf(
-            "ar",
-            "de",
-            "es",
-            "fa",
-            "fr",
-            "ja",
-            "ko",
-            "ru",
-            "tr",
-            "uk",
-            "zh-rCN",
-            "zh-rTW",
-        ))
+//        defaultConfig.resourceConfigurations.addAll(listOf(
+//            "ar",
+//            "de",
+//            "es",
+//            "fa",
+//            "fr",
+//            "ja",
+//            "ko",
+//            "ru",
+//            "tr",
+//            "uk",
+//            "zh-rCN",
+//            "zh-rTW",
+//        ))
         buildTypes {
             getByName("debug") {
                 isPseudoLocalesEnabled = true
@@ -104,10 +104,10 @@ fun Project.setupApp() {
         }
         lint.disable += "RemoveWorkManagerInitializer"
         packagingOptions.jniLibs.useLegacyPackaging = true
-        splits.abi {
-            isEnable = true
-            isUniversalApk = true
-        }
+//        splits.abi {
+//            isEnable = true
+//            isUniversalApk = true
+//        }
     }
 
     dependencies.add("implementation", project(":core"))

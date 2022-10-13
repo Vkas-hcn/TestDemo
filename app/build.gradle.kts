@@ -29,7 +29,7 @@ dependencies {
     implementation("com.twofortyfouram:android-plugin-api-for-locale:1.0.4")
     implementation("me.zhanghai.android.fastscroll:library:1.1.8")
 
-    implementation ("com.google.android.gms:play-services-ads:21.0.0")
-    implementation ("com.jeremyliao:live-event-bus-x:1.5.7")
-
+    implementation("com.google.android.gms:play-services-ads:21.0.0")
+    implementation("com.jeremyliao:live-event-bus-x:1.5.7")
+    implementation("com.github.CymChad:BaseRecyclerViewAdapterHelper:3.0.8")
 }

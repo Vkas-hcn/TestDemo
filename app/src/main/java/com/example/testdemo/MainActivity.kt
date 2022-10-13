@@ -1,15 +1,14 @@
 package com.example.testdemo
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.RemoteException
 import android.os.SystemClock
 import android.util.Log
-import android.widget.Button
-import android.widget.Chronometer
-import android.widget.Switch
-import android.widget.Toast
+import android.view.animation.Animation
+import android.view.animation.RotateAnimation
+import android.widget.*
 import android.widget.Toast.LENGTH_SHORT
+import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceDataStore
 import com.github.shadowsocks.Core
 import com.github.shadowsocks.R
@@ -26,11 +25,13 @@ import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 
-private lateinit var btnlink: Button
+
+private lateinit var imgSwitch: ImageView
+private lateinit var txtConnect: TextView
 private lateinit var timer: Chronometer
 lateinit var mAdView: AdView
 private var mInterstitialAd: InterstitialAd? = null
-
+private var  rotateAnim :Animation? = null
 class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
     OnPreferenceDataStoreChangeListener {
     companion object {
@@ -55,7 +56,7 @@ class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
             adRequest,
             object : InterstitialAdLoadCallback() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {
-                    adError.toString().let { Log.d("TAG", "===" + it) }
+                    adError.toString().let { Log.d("TAG", "===$it") }
                     mInterstitialAd = null
                 }
 
@@ -91,11 +92,16 @@ class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
     }
     private fun initView() {
         timer = findViewById(R.id.timer)
-        btnlink = findViewById(R.id.btn_link)
-        btnlink.setOnClickListener {
+        imgSwitch = findViewById(R.id.img_switch)
+        txtConnect = findViewById(R.id.txt_connect)
+        imgSwitch.setOnClickListener {
             startInterstitial()
         }
-        changeState(BaseService.State.Idle, animate = false)    // reset everything to init state
+         rotateAnim = RotateAnimation(0f, 360f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f)
+        rotateAnim?.duration = 3000;
+        rotateAnim?.repeatCount = -1;//动画的重复次数
+        rotateAnim?.fillAfter = true;//设置为true，动画转化结束后被应用
+        changeState(BaseService.State.Idle, animate = false)
         connection.connect(this, this)
         DataStore.publicStore.registerChangeListener(this)
         ProfileManager.getProfile(DataStore.profileId).let {
@@ -121,7 +127,6 @@ class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
     private fun startVpn() {
         if (state.canStop) {
             Core.stopService()
-            timer.stop()
         } else {
             connect.launch(null)
             timer.base = SystemClock.elapsedRealtime()
@@ -164,21 +169,23 @@ class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
     private fun setConnectionStatusText(state: String) {
          when (state) {
             "Connecting" -> {
-                btnlink.text = "连接中"
+                txtConnect.text = "Connecting..."
             }
             "Connected" -> {
                 timer.start()
-                btnlink.text = "断开连接"
+                imgSwitch.startAnimation(rotateAnim)
+                txtConnect.text = "Connected"
             }
             "Stopping" -> {
-                btnlink.text =  "断开中"
+                txtConnect.text =  "Stopping"
             }
             "Stopped" -> {
                 timer.stop()
-                btnlink.text =    "点击连接"
+                imgSwitch.clearAnimation()
+                txtConnect.text =    "Stopped"
             }
             else -> {
-                btnlink.text =    "配置中"
+                txtConnect.text =    "Configuring"
             }
         }
 
