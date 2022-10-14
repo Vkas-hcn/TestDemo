@@ -1,86 +1,91 @@
 package com.example.testdemo.ui.servicelist
 
 import android.os.Bundle
+import android.util.Log
+import android.view.View
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.testdemo.bean.ProfileBean
+import com.example.testdemo.constant.Constant
+import com.example.testdemo.utils.JsonUtil
+import com.example.testdemo.utils.KLog
+import com.example.testdemo.utils.ResourceUtils.readStringFromAssert
 import com.github.shadowsocks.R
+import com.google.gson.reflect.TypeToken
+import com.jeremyliao.liveeventbus.LiveEventBus
+import java.io.InputStream
 
 class ServiceListActivity : AppCompatActivity() {
+    private lateinit var frameLayoutTitle: FrameLayout
+    private lateinit var blackTitle: ImageView
+    private lateinit var imgTitle:ImageView
+    private lateinit var tvTitle:TextView
+    private lateinit var ivRight:ImageView
+    private lateinit var serviceListAdapter: ServiceListAdapter
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var profileBean: ProfileBean
+    private lateinit var safeLocation: MutableList<ProfileBean.SafeLocation>
+    private lateinit var checkSafeLocation: ProfileBean.SafeLocation
+
+    private lateinit var tvConnect:TextView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_service_list)
-//        initRecyclerView()
+        initRecyclerView()
     }
 
-//    private fun initRecyclerView() {
-//        mAdapter = OrderListAdapter(listData)
-//        binding.layoutManager = LinearLayoutManager(this)
-//        binding.adapter = mAdapter
-//        val decor =
-//            DividerItemDecoration(this, (binding.layoutManager as LinearLayoutManager).orientation)
-//        ContextCompat.getDrawable(this, R.drawable.recycler_item_divider)
-//            ?.let { decor.setDivider(it) }
-//        binding.recyclerView.addItemDecoration(decor)
-//        mAdapter.setOnItemClickListener { _, _, position ->
-//            val bean: OrderListInfo.DataBean = listData[position]
-//            //待付款&待提货
-//            val intent =
-//                if ((bean.orderStatus == 1 || bean.orderStatus == 16) && bean.afterSaleStatus != 1) {
-//                    //保存订单列表
-//                    Intent(this, OrderWriteOffActivity().javaClass)
-//                } else {
-//                    Intent(this, OrderDetailActivity().javaClass)
-//                }
-//            val dataJson = GsonUtil.bean2String(listData[position])
-//            intent.putExtra("listData", dataJson)
-//            intent.putExtra("orderId", bean.id)
-//            //售后id置空
-//            MmkvUtils.set(Constant.AFTER_SALES_ID, "")
-//            startActivity(intent)
-//        }
-//        mAdapter.setOnItemChildClickListener { _, view, position ->
-//            when (view.id) {
-//                //发货
-//                R.id.item_deliver_goods_btn -> deliverClick(position)
-//                //主动退款
-//                R.id.item_active_refund_btn -> activeRefundClick(position)
-//                //核销
-//                R.id.item_write_off_btn -> writeOffClick(position)
-//                R.id.item_order_update_btn -> updateClick(position)
-//                //更多（驳回，同意退款）
-//                R.id.text_popup_more -> morePopupClick(view, position)
-//                R.id.item_order_reject_btn -> rejectClick(position)
-//                R.id.item_order_cancel_btn -> cancelClick(position)
-//                R.id.item_order_refund_btn -> refundClick(position)
-//                R.id.item_verification_code_verification_btn -> verificationCodeVerification(
-//                    position
-//                )
-//                R.id.item_scan_write_off_btn -> scanAndWriteOff()
-//            }
-//        }
-//        binding.refreshLayout.setOnRefreshListener {
-//            viewModel.map["pageNum"] = 1
-//            viewModel.getOrderListData()
-//        }
-//        //上拉加载更多
-//        binding.refreshLayout.setOnLoadMoreListener {
-//            var page: Int = Integer.valueOf(viewModel.map["pageNum"].toString())
-//            viewModel.map["pageNum"] = ++page
-//            viewModel.getOrderListData()
-//        }
-//        radio_group.setOnCheckedChangeListener { group, checkedId ->
-//            val type = when (checkedId) {
-//                R.id.radio_button0 -> "SELF_TAKE_ORDER"
-//                R.id.radio_button1 -> "SEND_ORDER"
-////                R.id.radio_button2 -> 2
-//                else -> "SELF_TAKE_ORDER"
-//            }
-////            viewModel.map["multiOrderType"] = type
-//            viewModel.map["multiOrderTabEnum"] = type
-//            viewModel.map["pageNum"] = 1
-//            tabTitleChange(checkedId)
-//
-//        }
-//    }
+    private fun initRecyclerView() {
+        frameLayoutTitle =findViewById(R.id.bar_service_list)
+        blackTitle = findViewById(R.id.ivBack)
+        imgTitle =findViewById(R.id.img_title)
+        tvTitle = findViewById(R.id.tv_title)
+        ivRight = findViewById(R.id.ivRight)
+        tvConnect = findViewById(R.id.tv_connect)
+        recyclerView = findViewById(R.id.rv_service_list)
+        imgTitle.visibility = View.GONE
+        tvTitle.visibility = View.VISIBLE
+        ivRight.visibility = View.GONE
+        blackTitle.setImageResource(R.mipmap.ic_black)
+        safeLocation = ArrayList()
+        profileBean = ProfileBean()
+        checkSafeLocation = ProfileBean.SafeLocation()
+        profileBean = getMenuJsonData("serviceJson.json")
+        safeLocation = profileBean.safeLocation!!
+        serviceListAdapter = ServiceListAdapter(safeLocation)
+        val layoutManager = LinearLayoutManager(this)
+        layoutManager.orientation = LinearLayoutManager.VERTICAL
+        recyclerView.layoutManager = layoutManager
+        recyclerView.adapter = serviceListAdapter
+        serviceListAdapter.setOnItemClickListener { _, _, position ->
+            safeLocation.forEachIndexed { index, _ ->
+                safeLocation[index].cheek_state = position == index
+                if(safeLocation[index].cheek_state == true){
+                    checkSafeLocation= safeLocation[index]
+                }
+            }
+            serviceListAdapter.notifyDataSetChanged()
+        }
+        blackTitle.setOnClickListener {
+            finish()
+        }
+        tvConnect.setOnClickListener {
+            LiveEventBus.get(Constant.SERVER_INFORMATION).post(checkSafeLocation)
+            finish()
+        }
+    }
+
+    /**
+     * @return 解析json文件
+     */
+    private fun getMenuJsonData(jsonName: String): ProfileBean {
+        Log.i("TAG", "getMenuJsonData: " + readStringFromAssert(jsonName))
+        return JsonUtil.fromJson(
+            readStringFromAssert(jsonName),
+            object : TypeToken<ProfileBean?>() {}.type
+        )
+    }
 }

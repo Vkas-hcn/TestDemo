@@ -35,6 +35,7 @@
                 android:value="" />
         </activity>
         <activity android:name="com.example.testdemo.MainActivity" />
+        <activity android:name="com.example.testdemo.ui.servicelist.ServiceListActivity"/>
 <!--        <service android:name=".bg.TileService"-->
 <!--            android:label="@string/quick_toggle"-->
 <!--            android:process=":bg"-->

@@ -6,9 +6,6 @@ import android.util.TypedValue;
 
 /**
  * 屏幕密度工具类
- *
- * @author xuexiang
- * @since 2018/12/18 上午12:15
  */
 public final class DensityUtils {
 

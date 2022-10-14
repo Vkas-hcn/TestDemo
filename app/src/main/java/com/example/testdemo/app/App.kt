@@ -24,7 +24,9 @@ import android.app.Application
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
 import com.example.testdemo.MainActivity
+import com.example.testdemo.utils.KLog
 import com.example.testdemo.utils.ResUtils
+import com.github.shadowsocks.BuildConfig
 import com.github.shadowsocks.Core
 import com.google.android.gms.ads.MobileAds
 import com.jeremyliao.liveeventbus.LiveEventBus
@@ -39,6 +41,8 @@ class App : Application(), androidx.work.Configuration.Provider by Core {
         LiveEventBus  // 事件儿总线通信
             .config().supportBroadcast(this) // 配置支持跨进程、跨APP通信，传入Context，需要在application onCreate中配置
             .lifecycleObserverAlwaysActive(true) //    整个生命周期（从onCreate到onDestroy）都可以实时收到消息
+        //是否开启打印日志
+        KLog.init(BuildConfig.DEBUG)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

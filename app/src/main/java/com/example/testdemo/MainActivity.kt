@@ -1,5 +1,6 @@
 package com.example.testdemo
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.RemoteException
 import android.os.SystemClock
@@ -10,6 +11,10 @@ import android.widget.*
 import android.widget.Toast.LENGTH_SHORT
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceDataStore
+import com.example.testdemo.bean.ProfileBean
+import com.example.testdemo.constant.Constant
+import com.example.testdemo.ui.servicelist.ServiceListActivity
+import com.example.testdemo.utils.KLog
 import com.github.shadowsocks.Core
 import com.github.shadowsocks.R
 import com.github.shadowsocks.aidl.IShadowsocksService
@@ -24,25 +29,40 @@ import com.github.shadowsocks.utils.StartService
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.jeremyliao.liveeventbus.LiveEventBus
 
 
-private lateinit var imgSwitch: ImageView
-private lateinit var txtConnect: TextView
-private lateinit var timer: Chronometer
-lateinit var mAdView: AdView
-private var mInterstitialAd: InterstitialAd? = null
-private var  rotateAnim :Animation? = null
 class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
     OnPreferenceDataStoreChangeListener {
     companion object {
         var stateListener: ((BaseService.State) -> Unit)? = null
     }
+    private lateinit var frameLayoutTitle:FrameLayout
+    private lateinit var rightTitle:ImageView
+    private lateinit var imgSwitch: ImageView
+    private lateinit var txtConnect: TextView
+    private lateinit var timer: Chronometer
 
+    private lateinit var imgCountry: ImageView
+    private lateinit var tvLocation: TextView
+    lateinit var mAdView: AdView
+    private var mInterstitialAd: InterstitialAd? = null
+    private var rotateAnim: Animation? = null
+    private lateinit var checkSafeLocation:ProfileBean.SafeLocation
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         initAd()
         initView()
+        initLiveBus()
+    }
+
+    private fun initLiveBus() {
+        LiveEventBus
+            .get(Constant.SERVER_INFORMATION, ProfileBean.SafeLocation::class.java)
+            .observeForever {
+                updateServer(it)
+            }
     }
 
     private fun initAd() {
@@ -90,15 +110,34 @@ class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
         }
 
     }
+
     private fun initView() {
+        frameLayoutTitle =findViewById(R.id.main_title)
         timer = findViewById(R.id.timer)
         imgSwitch = findViewById(R.id.img_switch)
         txtConnect = findViewById(R.id.txt_connect)
+        imgCountry = findViewById(R.id.img_country)
+        tvLocation = findViewById(R.id.tv_location)
         imgSwitch.setOnClickListener {
             startInterstitial()
         }
-         rotateAnim = RotateAnimation(0f, 360f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f)
-        rotateAnim?.duration = 3000;
+        rightTitle= frameLayoutTitle.findViewById(R.id.ivRight)
+        rightTitle.setOnClickListener {
+            val intent = Intent(this@MainActivity, ServiceListActivity::class.java)
+            startActivity(intent)
+        }
+        timer.base = SystemClock.elapsedRealtime()
+        val hour =  ((SystemClock.elapsedRealtime() - timer.base) / 1000 / 60)
+        timer.format = "0$hour:%s"
+        rotateAnim = RotateAnimation(
+            0f,
+            360f,
+            Animation.RELATIVE_TO_SELF,
+            0.5f,
+            Animation.RELATIVE_TO_SELF,
+            0.5f
+        )
+        rotateAnim?.duration = 2000
         rotateAnim?.repeatCount = -1;//动画的重复次数
         rotateAnim?.fillAfter = true;//设置为true，动画转化结束后被应用
         changeState(BaseService.State.Idle, animate = false)
@@ -106,6 +145,28 @@ class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
         DataStore.publicStore.registerChangeListener(this)
         ProfileManager.getProfile(DataStore.profileId).let {
             if (it != null) {
+                ProfileManager.updateProfile(it)
+            } else {
+                ProfileManager.createProfile(Profile())
+            }
+        }
+        DataStore.profileId = 1L
+    }
+
+    /**
+     * 更新服务器
+     */
+    private fun updateServer(safeLocation: ProfileBean.SafeLocation){
+        checkSafeLocation = ProfileBean.SafeLocation()
+        checkSafeLocation =safeLocation
+        tvLocation.text = checkSafeLocation.ufo_country+"-"+checkSafeLocation.ufo_city
+        ProfileManager.getProfile(DataStore.profileId).let {
+            if (it != null) {
+                it.name = safeLocation.ufo_country
+                it.host = safeLocation.ufo_ip.toString()
+                it.remotePort = safeLocation.ufo_port!!
+                it.password  = safeLocation.ufo_pwd!!
+                it.method = safeLocation.ufo_method!!
                 ProfileManager.updateProfile(it)
             } else {
                 ProfileManager.createProfile(Profile())
@@ -129,7 +190,6 @@ class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
             Core.stopService()
         } else {
             connect.launch(null)
-            timer.base = SystemClock.elapsedRealtime()
         }
     }
 
@@ -138,11 +198,6 @@ class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
      */
     private fun startInterstitial() {
         startVpn()
-//        if (mInterstitialAd != null) {
-//            mInterstitialAd?.show(this)
-//        } else {
-//            Log.d("TAG", "The interstitial ad wasn't ready yet.")
-//        }
     }
 
 
@@ -167,7 +222,7 @@ class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
      * 设置连接状态文本
      */
     private fun setConnectionStatusText(state: String) {
-         when (state) {
+        when (state) {
             "Connecting" -> {
                 txtConnect.text = "Connecting..."
             }
@@ -177,15 +232,15 @@ class MainActivity : AppCompatActivity(), ShadowsocksConnection.Callback,
                 txtConnect.text = "Connected"
             }
             "Stopping" -> {
-                txtConnect.text =  "Stopping"
+                txtConnect.text = "Stopping"
             }
             "Stopped" -> {
                 timer.stop()
                 imgSwitch.clearAnimation()
-                txtConnect.text =    "Stopped"
+                txtConnect.text = "Stopped"
             }
             else -> {
-                txtConnect.text =    "Configuring"
+                txtConnect.text = "Configuring"
             }
         }
 
